@@ -11,10 +11,9 @@ import {
   Input,
   Button
 } from "antd";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import moment from 'moment';
-import { Notification } from "../utils/utils";
+import { getAllData, add, fetchData } from "../utils/utils";
 
 const columns = [
   {
@@ -66,83 +65,23 @@ function Supplying() {
   const [isAddModal, setIsAddModal] = useState();
 
   const getAllSupplying = () => {
-    setLoadingSupplying(true);
-    axios.get("http://localhost:3000/supplying", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data.success) {
-        setList(res?.data.values);
-      }
-      setLoadingSupplying(false);
-    })
-  }
+    getAllData('supplying', setList, setLoadingSupplying);
+  };
 
   useEffect(() => {
     getAllSupplying();
-
-    axios.get("http://localhost:3000/product", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setProducts(res?.data.values || [])
-      }
-    })
-
-    axios.get("http://localhost:3000/warehouse", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setWarehouse(res?.data.values || [])
-      }
-    })
-
-    axios.get("http://localhost:3000/supplier", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setSupplier(res?.data.values || [])
-      }
-    })
+    fetchData("http://localhost:3000/supplier", setSupplier);
+    fetchData("http://localhost:3000/warehouse", setWarehouse);
+    fetchData("http://localhost:3000/product", setProducts);
   }, []);
 
   const onChange = (e) => console.log(`radio checked:${e.target.value}`);
 
   const handleAdd = (values) => {
-    //console.log(values.Quantity);
-    if (!values?.Quantity) {
-      Response("Тоо ширхэгийн мэдээлэл дээр алдаа гарлаа.", true);
-    } else if (values?.Quantity < 1) {
-      Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-    } else {
-      const isInteger = /^\d+$/.test(values?.Quantity);
-      console.log(isInteger)
-      if (!isInteger) {
-        Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-      } else {
-        axios.post('http://localhost:3000/supplying', values, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => {
-          if (res.data.success) {
-            Notification(res.data, res.message, true);
-            getAllSupplying();
-            setIsAddModal(false);
-          } else {
-            Notification(res.data, res.message, true);
-          }
-        })
-      }
-    }
-  }
+    const apiEndpoint = 'http://localhost:3000/supplying';
+    add(values, getAllSupplying, setIsAddModal, apiEndpoint);
+  };
+
   return (
     <>
       <div className="layout-content">
@@ -170,10 +109,6 @@ function Supplying() {
                   className="ant-border-space"
                   pagination={false}
                   rowKey={row => row._id}
-                // onRow={e => ({
-                //   onClick: () => setRow(e)
-                // })}
-                // rowClassName={e => e._id === row?._id && 'active'}
                 />
               </div>
             </Card>
@@ -213,7 +148,7 @@ function Supplying() {
               />
             </Form.Item>
             <Form.Item name="Quantity" label="Барааны тоо ширхэг" rules={[{ required: true, message: 'Нийлүүлсэн барааны тоо ширхэгийг оруулна уу.' }]}>
-              <Input placeholder="Тоо ширхэг" />
+              <Input placeholder="Тоо ширхэг" type="number" min={0} />
             </Form.Item>
 
             <Form.Item>

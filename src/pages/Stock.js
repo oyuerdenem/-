@@ -5,10 +5,9 @@ import {
   Typography,
   Table
 } from "antd";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import moment from 'moment';
-import { Notification } from "../utils/utils";
+import { getAllData } from "../utils/utils";
 
 const columns = [
   {
@@ -45,19 +44,11 @@ function Stock() {
   const { Title } = Typography;
   const [list, setList] = useState([]);
   const [loadingStock, setLoadingStock] = useState(false);
+  
+
   const getAllStock = () => {
-    setLoadingStock(true);
-    axios.get("http://localhost:3000/stock", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setList(res?.data?.values);
-      }
-      setLoadingStock(false);
-    }).catch(err => err)
-  }
+    getAllData('stock', setList, setLoadingStock);
+  };
 
   useEffect(() => {
     getAllStock();

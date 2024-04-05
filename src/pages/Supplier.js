@@ -13,7 +13,7 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Notification } from "../utils/utils";
+import { Notification, getAllData } from "../utils/utils";
 const project = [
   {
     title: "№",
@@ -42,17 +42,7 @@ function Supplier() {
   const [isUpdateModal, setIsUpdateModal] = useState();
 
   const getAll = () => {
-    setLoadingSupplier(true);
-    axios.get('http://localhost:3000/supplier', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setSupplier(res?.data?.values);
-      }
-      setLoadingSupplier(false);
-    })
+    getAllData('supplier', setSupplier, setLoadingSupplier);
   };
 
   useEffect(() => {

@@ -1,7 +1,6 @@
 import ReactApexChart from "react-apexcharts";
 import { Typography } from "antd";
 import { MinusOutlined } from "@ant-design/icons";
-import lineChart from "./configs/lineChart";
 
 function LineChart({ values = {} }) {
   const { Title, Paragraph } = Typography;
@@ -22,6 +21,8 @@ function LineChart({ values = {} }) {
           </ul>
         </div>
       </div>
+      <div>
+        {values?.options && (
           <ReactApexChart
             className="full-width"
             options={{
@@ -38,6 +39,10 @@ function LineChart({ values = {} }) {
             height={350}
             width={"100%"}
           />
+        )}
+
+      </div>
+
 
     </>
   );

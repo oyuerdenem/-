@@ -1,5 +1,9 @@
 import { notification } from "antd"
+import axios from "axios"
 import { ShopOutlined, WalletOutlined, CarOutlined, SendOutlined, UsergroupAddOutlined, BarChartOutlined, ProfileOutlined, HddOutlined, FileTextOutlined } from '@ant-design/icons'
+import { Form, Select, Input, Button, Drawer } from 'antd';
+
+const { Option } = Select;
 
 const Notification = (res, description = "", isshow = false) => {
   if (res?.success && isshow) {
@@ -72,7 +76,143 @@ const menulist = [
     label: "Татан авалт"
   }
 ];
+const deleteRow = async (row, getAll, setRow, apiEndpoint) => {
+  try {
+    const response = await axios.delete(`${apiEndpoint}/${row._id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
 
+    if (response.data.success) {
+      Notification(response.data, response.message, true);
+      getAll();
+      setRow();
+    } else {
+      Notification(response.data, response.message, true);
+    }
+  } catch (error) {
+    console.error('Error deleting row:', error);
+  }
+};
+const addEntity = async (values, getAll, setIsModal, apiEndpoint) => {
+  try {
+    const response = await axios.post(`${apiEndpoint}`, values, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (response.data.success) {
+      Notification(response.data, response.message, true);
+      getAll();
+      setIsModal(false);
+    } else {
+      Notification(response.data, response.message, true);
+    }
+  } catch (error) {
+    console.error('Error adding entity:', error);
+  }
+};
+const updateEntity = async (id, values, getAll, setIsModal, apiEndpoint) => {
+  try {
+    const response = await axios.put(`${apiEndpoint}/${id}`, values, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (response.data.success) {
+      Notification(response.data, response.message, true);
+      getAll();
+      setIsModal(false);
+    } else {
+      Notification(response.data, response.message, true);
+    }
+  } catch (error) {
+    console.error('Error updating entity:', error);
+  }
+};
+const add = async (values, getAll, setIsModal, apiEndpoint) => {
+  try {
+    const response = await axios.post(`${apiEndpoint}`, values, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (response?.data?.success) {
+      Notification(response.data, response.message, true);
+      getAll();
+      setIsModal(false);
+    } else {
+      Notification(response.data, response.message, true);
+    }
+  } catch (error) {
+    console.error('Error adding supply:', error);
+  }
+};
+const fetchData = async (url, setter) => {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (response.data.success) {
+      setter(response.data.values || []);
+    }
+  } catch (error) {
+    // Handle error appropriately
+    console.error('Error fetching data:', error);
+  }
+};
+const renderFormItems = (formConfig, onFinish) => (
+  <Drawer title={formConfig.title} visible={formConfig.visible} onClose={formConfig.onClose} footer={false} destroyOnClose>
+    <Form layout="vertical" onFinish={onFinish}>
+      {formConfig.items.map(item => (
+        <Form.Item key={item.name} name={item.name} label={item.label} rules={item.rules}>
+          {item.type === 'select' ? (
+            <Select defaultValue="" style={{ width: 200 }} onChange={item.onChange}>
+              {item.options.map(option => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          ) : item.type === 'input' ? (
+            <Input placeholder={item.placeholder} type={item.inputType} min={item.min} />
+          ) : null}
+        </Form.Item>
+      ))}
+      <Form.Item>
+        <Button htmlType="submit" type="primary">
+          {formConfig.submitButtonText || 'Submit'}
+        </Button>
+      </Form.Item>
+    </Form>
+  </Drawer>
+);
+const getAllData = async (endpoint, setList, setLoading) => {
+  try {
+    setLoading(true);
+    const response = await axios.get(`http://localhost:3000/${endpoint}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (response?.data.success) {
+      setList(response?.data.values);
+    }
+  } catch (error) {
+    // Handle error appropriately
+    console.error('Error fetching data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 export {
-  Notification, menulist, Response
+  Notification, menulist, Response, deleteRow, addEntity, updateEntity, add, fetchData, renderFormItems, getAllData
 }

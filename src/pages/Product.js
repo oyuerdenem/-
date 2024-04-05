@@ -12,11 +12,8 @@ import {
   Popconfirm,
   Tooltip,
 } from "antd";
-
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { Response } from "../utils/utils";
-import { Notification } from "../utils/utils";
+import { Response, getAllData, deleteRow, addEntity, updateEntity } from "../utils/utils";
 
 const project = [
   {
@@ -47,7 +44,6 @@ const project = [
 
 function Product() {
   const { Title } = Typography;
-
   const [product, setProduct] = useState([]);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [row, setRow] = useState();
@@ -55,84 +51,33 @@ function Product() {
   const [isUpdateModal, setIsUpdateModal] = useState();
 
   const getAll = () => {
-    setLoadingProduct(true);
-    axios.get('http://localhost:3000/product'
-    , {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }
-    ).then(res => {
-      if (res.data.success) {
-        setProduct(res.data.values);
-      }
-      setLoadingProduct(false);
-    })
+    getAllData('product', setProduct, setLoadingProduct);
   };
-
   useEffect(() => {
     getAll();
   }, []);
-
   const onChange = (e) => {
   };
-
   const handleClickUpdate = () => {
     setIsUpdateModal(true);
   }
-
   const handleClickDelete = () => {
-    axios.delete('http://localhost:3000/product/' + row._id, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.message, true);
-        getAll();
-        setRow();
-      } else {
-        Notification(res.data, res.message, true);
-      }
-    })
-  }
-
+    const apiEndpoint = 'http://localhost:3000/product'; 
+    deleteRow(row, getAll, setRow, apiEndpoint);
+  };
   const handleAddProduct = (values) => {
     if (!values) {
       Response("Барааны мэдээлэл алдаатай байна.", true);
     } else {
-          axios.post('http://localhost:3000/product', values, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          }).then(res => {
-            if (res.data.success) {
-              Notification(res.data, res.message, true);
-              getAll();
-              setIsAddModal(false);
-            } else {
-              Notification(res.data, res.message, true);
-            }
-          })
+      const apiEndpoint = 'http://localhost:3000/product';
+      addEntity(values, getAll, setIsAddModal, apiEndpoint);
     }
-  }
-
+  };
   const handleUpdateProduct = (values) => {
-    axios.put('http://localhost:3000/product/' + row._id, values, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.message, true);
-        getAll();
-        setIsUpdateModal(false);
-      } else {
-        Notification(res.data, res.message, true);
-      }
-    })
-  }
-
+    const apiEndpoint = 'http://localhost:3000/product';
+    updateEntity(row._id, values, getAll, setIsUpdateModal, apiEndpoint);
+  };
+  
   return (
     <>
       <div className="tabled">

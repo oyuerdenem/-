@@ -3,19 +3,12 @@ import {
   Col,
   Row,
   Typography,
-  Select,
   Radio,
-  Table,
-  Drawer,
-  Form,
-  Input,
-  Button
+  Table
 } from "antd";
-import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Response } from "../utils/utils";
 import moment from 'moment';
-import { Notification } from "../utils/utils";
+import { getAllData, add, fetchData, renderFormItems } from "../utils/utils";
 
 const columns = [
   {
@@ -48,93 +41,75 @@ const columns = [
     title: "Тоо ширхэг",
     dataIndex: "Quantity",
     width: "50px",
-    render: (data) => <p style={{textAlign: "end"}}>{`${data?.toLocaleString?.()} ш`}</p>
+    render: (data) => <p style={{ textAlign: "end" }}>{`${data?.toLocaleString?.()} ш`}</p>
   }
 ];
 
 function Movement() {
   const { Title } = Typography;
   const [list, setList] = useState([]);
-
   const [senderWarehouse, setSetsenderWarehouse] = useState();
   const [loading, setLoading] = useState(false);
-
   const [products, setProducts] = useState([]);
   const [warehouse, setWarehouse] = useState([])
-
   const [isAddModal, setIsAddModal] = useState();
-
-  const getAllMovement = () => {
-    setLoading(true);
-    axios.get("http://localhost:3000/movement", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data.success) {
-        setList(res?.data.values);
-      }
-      setLoading(false);
-    })
-  }
-
-  useEffect(() => {
-    getAllMovement();
-
-    axios.get("http://localhost:3000/product", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setProducts(res?.data.values || [])
-      }
-    })
-
-    axios.get("http://localhost:3000/warehouse", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data?.success) {
-        setWarehouse(res?.data.values || [])
-      }
-    })
-
-  }, []);
-
-  const onChange = (e) => console.log(`radio checked:${e.target.value}`);
-
-  const handleAdd = (values) => {
-    if (!values?.Quantity) {
-      Response("Тоо ширхэгийн мэдээлэл дээр алдаа гарлаа.", true);
-    } else if (values?.Quantity < 1) {
-      Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-    } else {
-      const isInteger = /^\d+$/.test(values?.Quantity);
-      console.log(isInteger)
-      if (!isInteger) {
-        Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-      } else {
-        axios.post('http://localhost:3000/movement', values, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => {
-          if (res.data.success) {
-            Notification(res.data, res.message, true);
-            getAllMovement();
-            setIsAddModal(false);
-          } else {
-            Notification(res.data, res.message, true);
-          }
-        })
-      }
-    }
-  }
-
+  
   const handleChangeSender = (e) => {
     setSetsenderWarehouse(e);
+  };
+  const formConfig = {
+    title: 'Бараа бүртгэх',
+    visible: isAddModal,
+    onClose: () => setIsAddModal(false),
+    items: [
+      {
+        name: 'SendWarehouseId',
+        label: 'Илгээгч - Агуулах',
+        rules: [{ required: true, message: 'Нийлүүлэгчийг сонгоно уу.' }],
+        type: 'select',
+        onChange: handleChangeSender,
+        options: warehouse.map(x => ({ value: x?._id, label: x?.Name })),
+      },
+      {
+        name: 'RecieveWarehouseId',
+        label: 'Хүлээн авагч - Агуулах',
+        rules: [{ required: true, message: 'Агуулахыг сонгоно уу.' }],
+        type: 'select',
+        onChange: null,
+        options: warehouse.map(x => x?._id !== senderWarehouse && { value: x?._id, label: x?.Name }),
+      },
+      {
+        name: 'ProductId',
+        label: 'Бараа',
+        rules: [{ required: true, message: 'Барааг сонгоно уу.' }],
+        type: 'select',
+        onChange: null,
+        options: products.map(x => ({ value: x?._id, label: x?.Name })),
+      },
+      {
+        name: 'Quantity',
+        label: 'Барааны тоо ширхэг',
+        rules: [{ required: true, message: 'Нийлүүлсэн барааны тоо ширхэгийг оруулна уу.' }],
+        type: 'input',
+        placeholder: 'Тоо ширхэг',
+        inputType: 'number',
+        min: 0,
+      },
+    ],
+    submitButtonText: 'Хадгалах', // Optional, defaults to 'Submit'
+  };
+  const getAllMovement = () => {
+    getAllData('movement', setList, setLoading);
+  };
+  useEffect(() => {
+    getAllMovement();
+    fetchData("http://localhost:3000/warehouse", setWarehouse);
+    fetchData("http://localhost:3000/product", setProducts);
+  }, []);
+  const onChange = (e) => console.log(`radio checked:${e.target.value}`);
+  const handleAdd = (values) => {
+    const apiEndpoint = 'http://localhost:3000/movement';
+    add(values, getAllMovement, setIsAddModal, apiEndpoint);
   };
 
   return (
@@ -169,50 +144,7 @@ function Movement() {
             </Card>
           </Col>
         </Row>
-
-        <Drawer title="Бараа бүртгэх" visible={isAddModal} onClose={() => setIsAddModal(false)} footer={false} destroyOnClose>
-          <Form layout="vertical" onFinish={handleAdd}>
-            <Form.Item name="SendWarehouseId" label="Илгээгч - Агуулах" rules={[{ required: true, message: 'Нийлүүлэгчийг сонгоно уу.' }]}>
-              <Select
-                defaultValue=""
-                style={{ width: 200 }}
-                // onChange={handleChange}
-                onChange={handleChangeSender}
-                children={<>
-                  {warehouse.map(x => <Select.Option key={x?._id} value={x?.id} children={x?.Name} />)}
-                </>}
-              />
-            </Form.Item>
-            <Form.Item name="RecieveWarehouseId" label="Хүлээн авагч - Агуулах" rules={[{ required: true, message: 'Агуулахыг сонгоно уу.' }]}>
-              <Select
-                defaultValue=""
-                style={{ width: 200 }}
-                // onChange={handleChange}
-                children={<>
-                  {warehouse.map(x => x?._id !== senderWarehouse && <Select.Option key={x?._id} value={x?.id} children={x?.Name} />)}
-                </>}
-              />
-            </Form.Item>
-            <Form.Item name="ProductId" label="Бараа" rules={[{ required: true, message: 'Барааг сонгоно уу.' }]}>
-              <Select
-                defaultValue=""
-                style={{ width: 200 }}
-                // onChange={handleChange}
-                children={<>
-                  {products.map(x => <Select.Option key={x?._id} value={x?.id} children={x?.Name} />)}
-                </>}
-              />
-            </Form.Item>
-            <Form.Item name="Quantity" label="Барааны тоо ширхэг" rules={[{ required: true, message: 'Нийлүүлсэн барааны тоо ширхэгийг оруулна уу.' }]}>
-              <Input placeholder="Тоо ширхэг" type="number" min={0}/>
-            </Form.Item>
-
-            <Form.Item>
-              <Button htmlType="submit" type="primary">Хадгалах</Button>
-            </Form.Item>
-
-          </Form>
-        </Drawer>
+        {renderFormItems(formConfig, handleAdd)}
       </div>
     </>
   );

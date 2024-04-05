@@ -12,8 +12,7 @@ import {
   Popconfirm,
 } from "antd";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { Notification } from "../utils/utils";
+import { deleteRow, addEntity, updateEntity, getAllData} from "../utils/utils";
 
 const project = [
   {
@@ -35,24 +34,14 @@ const project = [
 
 function Warehouses() {
   const { Title } = Typography;
-  const [warehouses, setWarehouses] = useState([]);
+  const [warehouses, setWarehouses] = useState([]); 
   const [loadingWarehouse, setLoadingWarehouse] = useState(false);
   const [row, setRow] = useState();
   const [isAddModal, setIsAddModal] = useState();
   const [isUpdateModal, setIsUpdateModal] = useState();
 
   const getAll = () => {
-    setLoadingWarehouse(true);
-    axios.get('http://localhost:3000/warehouse', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        setWarehouses(res.data.values);
-      }
-      setLoadingWarehouse(false);
-    })
+    getAllData('warehouse', setWarehouses, setLoadingWarehouse);
   };
 
   useEffect(() => {
@@ -67,48 +56,23 @@ function Warehouses() {
   }
 
   const handleClickDelete = () => {
-    axios.delete('http://localhost:3000/warehouse/' + row._id, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.data.message, true);
-        getAll();
-        setRow();
-      } else {
-        Notification(res.data, res.data.message, true);
-      }
-    })
-  }
+    const apiEndpoint = 'http://localhost:3000/warehouse'; 
+    deleteRow(row, getAll, setRow, apiEndpoint);
+  };
 
   const handleAddWarehouse = (values) => {
-    axios.post('http://localhost:3000/warehouse', values, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.data.message, true);
-        getAll();
-        setIsAddModal(false);
-      }
-    })
-  }
+    if (!values) {
+      Response("Агуулахын мэдээлэл алдаатай байна.", true);
+    } else {
+      const apiEndpoint = 'http://localhost:3000/warehouse';
+      addEntity(values, getAll, setIsAddModal, apiEndpoint);
+    }
+  };
 
   const handleUpdateWarehouse = (values) => {
-    axios.put('http://localhost:3000/warehouse/' + row._id, values, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.data.message, true);
-        getAll();
-        setIsUpdateModal(false);
-      }
-    })
-  }
+    const apiEndpoint = 'http://localhost:3000/warehouse';
+    updateEntity(row._id, values, getAll, setIsUpdateModal, apiEndpoint);
+  };
 
   return (
     <>

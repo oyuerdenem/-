@@ -11,10 +11,9 @@ import {
   Input,
   Button
 } from "antd";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import moment from 'moment';
-import { Notification } from "../utils/utils";
+import { getAllData, add, fetchData } from "../utils/utils";
 
 const columns = [
   {
@@ -57,7 +56,7 @@ const columns = [
 ];
 
 function Sale() {
-  const [storage, setStorage] = useState([]);
+  const [warehouse, setWarehouse] = useState([]);
   const [store, setStore] = useState([]);
   const [product, setProduct] = useState([]);
 
@@ -70,84 +69,21 @@ function Sale() {
   const onChange = (e) => console.log(`radio checked: ${e.target.value}`);
 
   const getAllSale = () => {
-    setLoading(true);
-    axios.get("http://localhost:3000/sale", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res?.data.success) {
-        setList(res?.data.values);
-      }
-      setLoading(false);
-    })
-  }
+    getAllData('sale', setList, setLoading);
+  };
 
   useEffect(() => {
     getAllSale();
-    /**  */
-    axios.get("http://localhost:3000/warehouse", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      console.log(res);
-      if (res?.data?.success) {
-        setStorage(res?.data.values || [])
-      }
-    })
-    /**  */
-    axios.get("http://localhost:3000/store", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      console.log(res);
-      if (res?.data?.success) {
-        setStore(res?.data.values || [])
-      }
-    })
-    /**  */
-    axios.get("http://localhost:3000/product", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      console.log(res);
-      if (res?.data?.success) {
-        setProduct(res?.data.values || [])
-      }
-    })
+    fetchData("http://localhost:3000/warehouse", setWarehouse);
+    fetchData("http://localhost:3000/store", setStore);
+    fetchData("http://localhost:3000/product", setProduct);
   }, []);
 
   const handleAdd = (values) => {
-    // console.log(values.Quantity);
-    if (!values?.Quantity) {
-      Response("Тоо ширхэгийн мэдээлэл дээр алдаа гарлаа.", true);
-    } else if (values?.Quantity < 1) {
-      Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-    } else {
-      const isInteger = /^\d+$/.test(values?.Quantity);
-      console.log(isInteger)
-      if (!isInteger) {
-        Response("Тоо ширхэгийн мэдээлэл буруу байна.", true);
-      } else {
-        axios.post('http://localhost:3000/sale', values, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }).then(res => {
-          if (res.data.success) {
-            Notification(res.data, res.message, true);
-            getAllSale();
-            setIsAddModal(false);
-          } else {
-            Notification(res.data, res.message, true);
-          }
-        })
-      }
-    }
-  }
+    const apiEndpoint = 'http://localhost:3000/sale';
+    add(values, getAllSale, setIsAddModal, apiEndpoint);
+  };
+
   return (
     <>
       <div className="layout-content">
@@ -188,7 +124,7 @@ function Sale() {
                 defaultValue=""
                 style={{ width: 200 }}
                 children={<>
-                  {storage.map(x => <Select.Option key={x?._id} value={x?._id} children={x?.Name} />)}
+                  {warehouse.map(x => <Select.Option key={x?._id} value={x?._id} children={x?.Name} />)}
                 </>}
               />
             </Form.Item>
@@ -211,7 +147,7 @@ function Sale() {
               />
             </Form.Item>
             <Form.Item name="Quantity" label="Тоо ширхэг" rules={[{ required: true, message: '' }]} >
-              <Input placeholder="Тоо ширхэг" />
+              <Input placeholder="Тоо ширхэг"type="number" min={0}/>
             </Form.Item>
             <Form.Item>
               <Button htmlType="submit" type="primary">Хадгалах</Button>

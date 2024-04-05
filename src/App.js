@@ -41,8 +41,6 @@ const Layout = ({ children }) => {
 };
 
 function App() {
-
-
   return (
     <Routes>
       <Route path="/sign-in" element={<SignIn />} />

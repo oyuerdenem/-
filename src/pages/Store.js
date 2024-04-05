@@ -12,8 +12,7 @@ import {
   Popconfirm,
 } from "antd";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { Notification } from "../utils/utils";
+import { getAllData, deleteRow, addEntity, updateEntity } from "../utils/utils";
 
 const columns = [
   {
@@ -43,18 +42,8 @@ function Store() {
   const [row, setRow] = useState();
 
   const getAll = () => {
-    setLoadingStore(true)
-    axios.get('http://localhost:3000/store', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        setStore(res.data.values);
-      }
-      setLoadingStore(false)
-    })
-  }
+    getAllData('store', setStore, setLoadingStore);
+  };
 
   useEffect(() => {
     getAll();
@@ -64,35 +53,17 @@ function Store() {
   };
 
   const handleAddStore = (values) => {
-    axios.post('http://localhost:3000/store', values, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.message, true);
-        getAll();
-        setIsAddModal(false)
-      } else {
-        Notification(res.data, res.message, true);
-      }
-    })
-  }
+    if (!values) {
+      Response("Дэлгүүрийн мэдээлэл алдаатай байна.", true);
+    } else {
+      const apiEndpoint = 'http://localhost:3000/store';
+      addEntity(values, getAll, setIsAddModal, apiEndpoint);
+    }
+  };
 
   const handleUpdateStore = (values) => {
-    axios.put('http://localhost:3000/store/' + row._id, values, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.message, true);
-        getAll();
-        setIsUpdateModal(false)
-      } else {
-        Notification(res.data, res.message, true);
-      }
-    })
+    const apiEndpoint = 'http://localhost:3000/store';
+    updateEntity(row._id, values, getAll, setIsUpdateModal, apiEndpoint);
   }
 
   const handleClickUpdate = () => {
@@ -100,20 +71,9 @@ function Store() {
   }
 
   const handleClickDelete = () => {
-    axios.delete('http://localhost:3000/store/' + row._id, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }).then(res => {
-      if (res.data.success) {
-        Notification(res.data, res.message, true);
-        getAll();
-        setRow();
-      } else {
-        Notification(res.data, res.message, true);
-      }
-    })
-  }
+    const apiEndpoint = 'http://localhost:3000/store'; 
+    deleteRow(row, getAll, setRow, apiEndpoint);
+  };
 
   return (
     <>
